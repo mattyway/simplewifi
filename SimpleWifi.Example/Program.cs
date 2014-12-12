@@ -151,7 +151,7 @@ namespace SimpleWifi.Example
 				}
 			}
 			
-			selectedAP.ConnectAsync(authRequest, overwrite, OnConnectedComplete);
+			selectedAP.Connect(authRequest, overwrite);
 		}
 
 		static string PasswordPrompt(AccessPoint selectedAP)
@@ -230,11 +230,6 @@ namespace SimpleWifi.Example
 		static void wifi_ConnectionStatusChanged(object sender, WifiStatusEventArgs e)
 		{
 			Console.WriteLine("\nNew status: {0}", e.NewStatus.ToString());
-		}
-
-		static void OnConnectedComplete(bool success)
-		{
-			Console.WriteLine("\nOnConnectedComplete, success: {0}", success);
 		}
 	}
 }
