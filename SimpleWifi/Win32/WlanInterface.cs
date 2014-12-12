@@ -1,11 +1,9 @@
 ﻿using SimpleWifi.Win32.Interop;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 
 namespace SimpleWifi.Win32
 {
@@ -52,10 +50,7 @@ namespace SimpleWifi.Win32
 		/// Occurs when a WLAN operation fails due to some reason.
 		/// </summary>
 		public event WlanReasonNotificationEventHandler WlanReasonNotification;
-		
-		private bool queueEvents;
-		private AutoResetEvent eventQueueFilled = new AutoResetEvent(false);
-		private Queue<object> eventQueue = new Queue<object>();
+
 		#endregion
 
 		#region Properties
@@ -374,56 +369,6 @@ namespace SimpleWifi.Win32
 		}
 
 		/// <summary>
-		/// Connects (associates) to the specified wireless network, returning either on a success to connect
-		/// or a failure.
-		/// </summary>
-		/// <param name="connectionMode"></param>
-		/// <param name="bssType"></param>
-		/// <param name="profile"></param>
-		/// <param name="connectTimeout"></param>
-		/// <returns></returns>
-		public bool ConnectSynchronously(WlanConnectionMode connectionMode, Dot11BssType bssType, string profile, int connectTimeout)
-		{
-			queueEvents = true; // NOTE: This can cause side effects, other places in the application might not get events properly.
-			try
-			{
-				Connect(connectionMode, bssType, profile);
-				while (queueEvents && eventQueueFilled.WaitOne(connectTimeout, true))
-				{
-					lock (eventQueue)
-					{
-						while (eventQueue.Count != 0)
-						{
-							object e = eventQueue.Dequeue();
-							if (e is WlanConnectionNotificationEventData)
-							{
-								WlanConnectionNotificationEventData wlanConnectionData = (WlanConnectionNotificationEventData)e;
-								// Check if the conditions are good to indicate either success or failure.
-								if (wlanConnectionData.notifyData.notificationSource == WlanNotificationSource.MSM)
-								{
-									switch ((WlanNotificationCodeMsm)wlanConnectionData.notifyData.notificationCode)
-									{
-										case WlanNotificationCodeMsm.Connected:										
-											if (wlanConnectionData.connNotifyData.profileName == profile)
-												return true;
-											break;
-									}
-								}
-								break;
-							}
-						}
-					}
-				}
-			}
-			finally
-			{
-				queueEvents = false;
-				eventQueue.Clear();
-			}
-			return false; // timeout expired and no "connection complete"
-		}
-
-		/// <summary>
 		/// Connects to the specified wireless network.
 		/// </summary>
 		/// <remarks>
@@ -534,45 +479,18 @@ namespace SimpleWifi.Win32
 		{
 			if (WlanConnectionNotification != null)
 				WlanConnectionNotification(notifyData, connNotifyData);
-
-			if (queueEvents)
-			{
-				WlanConnectionNotificationEventData queuedEvent = new WlanConnectionNotificationEventData();
-				queuedEvent.notifyData = notifyData;
-				queuedEvent.connNotifyData = connNotifyData;
-				EnqueueEvent(queuedEvent);
-			}
 		}
 
 		internal void OnWlanReason(WlanNotificationData notifyData, WlanReasonCode reasonCode)
 		{
 			if (WlanReasonNotification != null)
 				WlanReasonNotification(notifyData, reasonCode);
-
-			if (queueEvents)
-			{
-				WlanReasonNotificationData queuedEvent = new WlanReasonNotificationData();
-				queuedEvent.notifyData = notifyData;
-				queuedEvent.reasonCode = reasonCode;
-				EnqueueEvent(queuedEvent);
-			}
 		}
 
 		internal void OnWlanNotification(WlanNotificationData notifyData)
 		{
 			if (WlanNotification != null)
 				WlanNotification(notifyData);
-		}
-
-		/// <summary>
-		/// Enqueues a notification event to be processed serially.
-		/// </summary>
-		private void EnqueueEvent(object queuedEvent)
-		{
-			lock (eventQueue)
-				eventQueue.Enqueue(queuedEvent);
-
-			eventQueueFilled.Set();
 		}
 
 

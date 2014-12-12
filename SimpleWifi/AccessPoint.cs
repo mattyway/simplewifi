@@ -114,11 +114,11 @@ namespace SimpleWifi
 		/// <summary>
 		/// Connect synchronous to the access point.
 		/// </summary>
-		public bool Connect(AuthRequest request, bool overwriteProfile = false)
+		public void Connect(AuthRequest request, bool overwriteProfile = false)
 		{
 			// No point to continue with the connect if the password is not valid if overwrite is true or profile is missing.
 			if (!request.IsPasswordValid && (!HasProfile || overwriteProfile))
-				return false;
+				return;
 
 			// If we should create or overwrite the profile, do so.
 			if (!HasProfile || overwriteProfile)
@@ -132,7 +132,7 @@ namespace SimpleWifi
 
 			// TODO: Auth algorithm: IEEE80211_Open + Cipher algorithm: None throws an error.
 			// Probably due to connectionmode profile + no profile exist, cant figure out how to solve it though.
-			return _interface.ConnectSynchronously(WlanConnectionMode.Profile, _network.dot11BssType, Name, 6000);			
+			_interface.Connect(WlanConnectionMode.Profile, _network.dot11BssType, Name);			
 		}
 
 		/// <summary>
