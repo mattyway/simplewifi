@@ -64,6 +64,21 @@ namespace SimpleWifi
 		}
 
 		/// <summary>
+		/// Forces a refresh of available access points
+		/// </summary>
+		public void Scan()
+		{
+			if (_client.NoWifiAvailable)
+				return;
+
+			IsScanning = true;
+
+			foreach (WlanInterface wlanIface in _client.Interfaces) {
+				wlanIface.Scan ();
+			}
+		}
+
+		/// <summary>
 		/// Disconnect all wifi interfaces
 		/// </summary>
 		public void Disconnect()
@@ -92,12 +107,16 @@ namespace SimpleWifi
 			}
 		}
 
+		public bool IsScanning { get; private set; }
+
 		private void inte_WlanNotification(WlanNotificationData notifyData)
 		{
 			if (notifyData.notificationSource == WlanNotificationSource.ACM && (NotifCodeACM)notifyData.NotificationCode == NotifCodeACM.Disconnected)
 				OnConnectionStatusChanged(WifiStatus.Disconnected);
 			else if (notifyData.notificationSource == WlanNotificationSource.MSM && (NotifCodeMSM)notifyData.NotificationCode == NotifCodeMSM.Connected)
 				OnConnectionStatusChanged(WifiStatus.Connected);
+			else if (notifyData.notificationSource == WlanNotificationSource.ACM && (NotifCodeACM)notifyData.NotificationCode == NotifCodeACM.ScanComplete)
+				IsScanning = false;
 		}
 
 		private void OnConnectionStatusChanged(WifiStatus newStatus)
