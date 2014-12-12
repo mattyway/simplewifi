@@ -135,29 +135,6 @@ namespace SimpleWifi
 			_interface.Connect(WlanConnectionMode.Profile, _network.dot11BssType, Name);			
 		}
 
-		/// <summary>
-		/// Connect asynchronous to the access point.
-		/// </summary>
-		public void ConnectAsync(AuthRequest request, bool overwriteProfile = false, Action<bool> onConnectComplete = null)
-		{
-			// TODO: Refactor -> Use async connect in wlaninterface.
-			ThreadPool.QueueUserWorkItem(new WaitCallback((o) => {
-				bool success = false;
-
-				try
-				{
-					success = Connect(request, overwriteProfile);
-				}
-				catch (Win32Exception)
-				{					
-					success = false;
-				}
-
-				if (onConnectComplete != null)
-					onConnectComplete(success);
-			}));
-		}
-				
 		public string GetProfileXML()
 		{
 			if (HasProfile)
