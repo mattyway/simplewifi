@@ -112,7 +112,7 @@ namespace SimpleWifi
 		}		
 		
 		/// <summary>
-		/// Connect synchronous to the access point.
+		/// Attempt to connect to the access point.
 		/// </summary>
 		public void Connect(AuthRequest request, bool overwriteProfile = false)
 		{
