@@ -112,7 +112,7 @@ namespace SimpleWifi
 		}		
 		
 		/// <summary>
-		/// Attempt to connect to the access point.
+		/// Attempt to connect to the access point by creating a new profile.
 		/// </summary>
 		public void Connect(AuthRequest request, bool overwriteProfile = false)
 		{
@@ -133,6 +133,19 @@ namespace SimpleWifi
 			// TODO: Auth algorithm: IEEE80211_Open + Cipher algorithm: None throws an error.
 			// Probably due to connectionmode profile + no profile exist, cant figure out how to solve it though.
 			_interface.Connect(WlanConnectionMode.Profile, _network.dot11BssType, Name);			
+		}
+
+		/// <summary>
+		/// Attempt to connect to the access point using an existing profile.
+		/// </summary>
+		public void Connect (string profileXML)
+		{
+			if (HasProfile)
+				_interface.DeleteProfile(Name);
+
+			_interface.SetProfile(WlanProfileFlags.AllUser, profileXML, true);
+
+			_interface.Connect(WlanConnectionMode.Profile, _network.dot11BssType, Name);
 		}
 
 		public string GetProfileXML()
